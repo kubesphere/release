@@ -1,0 +1,37 @@
+repos:
+  - org: kubesphere
+    repo: kubesphere
+    branch: master
+    repo-path:
+    start-sha: 5c1f73134abf28a76bfef3a40e9059e6023a494a
+    end-sha: 4522c841af59db55c8f826cafbf01f721a8704ad
+    start-rev:
+    end-rev:
+    required-author: ""
+    discover: none
+    dependencies: true
+  - org: kubesphere
+    repo: console
+    branch: master
+    repo-path:
+    start-sha: def9a708115ea215125440d3c615b94e69179c5c
+    end-sha: 1c4111858f2da98e578ae1c4ad69413b4ca86d9b
+    start-rev: 
+    end-rev: 
+    required-author: ""
+    discover: none
+    dependencies: false
+github-base-url: https://github.com
+github-upload-url: ""
+output: /tmp/release-notes-v3.3.0.md
+format: markdown
+markdown-links: true
+debug: true
+release-bucket: kubernetes-release
+release-tars: ""
+toc: true
+list-v2: false
+
+
+
+  

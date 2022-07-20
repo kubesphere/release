@@ -338,7 +338,8 @@ func WriteReleaseNotes(releaseNotes *notes.ReleaseNotes) (err error) {
 		}
 
 		const nl = "\n"
-		if releaseNotesOpts.dependencies {
+		// if releaseNotesOpts.dependencies {
+		if false {
 			if opts.StartSHA == opts.EndSHA {
 				logrus.Info("Skipping dependency report because start and end SHA are the same")
 			} else {
@@ -375,11 +376,65 @@ func WriteReleaseNotes(releaseNotes *notes.ReleaseNotes) (err error) {
 }
 
 func run(*cobra.Command, []string) error {
-	releaseNotes, err := notes.GatherReleaseNotes(opts)
-	if err != nil {
-		return fmt.Errorf("gathering release notes: %w", err)
+	// for test now
+	var optss []options.Options
+	init := func() {
+		opt1 := options.Options{
+			GithubOrg:        "isyes",
+			GithubRepo:       "kubesphere",
+			RepoPath:         "",
+			Branch:           "master",
+			StartSHA:         "5c1f73134abf28a76bfef3a40e9059e6023a494a",
+			EndSHA:           "4522c841af59db55c8f826cafbf01f721a8704ad",
+			StartRev:         "",
+			EndRev:           "",
+			Format:           "markdown",
+			RequiredAuthor:   "",
+			Debug:            true,
+			GithubToken:      "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",
+			AddMarkdownLinks: true,
+		}
+		opt2 := options.Options{
+			GithubOrg:        "isyes",
+			GithubRepo:       "console",
+			RepoPath:         "",
+			Branch:           "master",
+			StartSHA:         "def9a708115ea215125440d3c615b94e69179c5c",
+			EndSHA:           "1c4111858f2da98e578ae1c4ad69413b4ca86d9b",
+			StartRev:         "",
+			EndRev:           "",
+			Format:           "markdown",
+			RequiredAuthor:   "",
+			Debug:            true,
+			GithubToken:      "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",
+			AddMarkdownLinks: true,
+		}
+		optss = append(optss, opt1, opt2)
 	}
-
+	init()
+	// fmt.Println(len(optss))
+	// return nil
+	var allRepoReleaseNotes []*notes.ReleaseNotes
+	for _, opts := range optss {
+		releaseNotes, err := notes.GatherReleaseNotes(&opts)
+		if err != nil {
+			return fmt.Errorf("gathering release notes: %w", err)
+		}
+		allRepoReleaseNotes = append(allRepoReleaseNotes, releaseNotes)
+	}
+	// merge all repo's release notes
+	mergeRepoReleaseNotes := func(rns []*notes.ReleaseNotes) *notes.ReleaseNotes {
+		mergeReleaseNotes := notes.NewReleaseNotes()
+		for _, rn := range rns {
+			prs := rn.ByPR()
+			for prNum, releaseNote := range prs {
+				mergeReleaseNotes.Set(prNum, releaseNote)
+			}
+		}
+		return mergeReleaseNotes
+	}
+	releaseNotes := mergeRepoReleaseNotes(allRepoReleaseNotes)
+	// return nil
 	return WriteReleaseNotes(releaseNotes)
 }
 

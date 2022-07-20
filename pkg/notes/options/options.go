@@ -117,7 +117,7 @@ type Options struct {
 	// API. Cannot be used together with RecordDir.
 	ReplayDir string
 
-	githubToken string
+	GithubToken string
 	gitCloneFn  func(string, string, string, bool) (*git.Repo, error)
 
 	// MapProviders list of release notes map providers to query during generations
@@ -186,7 +186,7 @@ func (o *Options) ValidateAndFinish() (err error) {
 	// The GitHub Token is required if replay is not specified
 	token, ok := os.LookupEnv(github.TokenEnvKey)
 	if ok {
-		o.githubToken = token
+		o.GithubToken = token
 	} else if o.ReplayDir == "" {
 		return fmt.Errorf(
 			"neither environment variable `%s` nor `replay` option is set",
@@ -356,9 +356,9 @@ func (o *Options) Client() (github.Client, error) {
 	var err error
 	// Create a real GitHub API client
 	if o.GithubBaseURL != "" && o.GithubUploadURL != "" {
-		gh, err = github.NewEnterpriseWithToken(o.GithubBaseURL, o.GithubUploadURL, o.githubToken)
+		gh, err = github.NewEnterpriseWithToken(o.GithubBaseURL, o.GithubUploadURL, o.GithubToken)
 	} else {
-		gh, err = github.NewWithToken(o.githubToken)
+		gh, err = github.NewWithToken(o.GithubToken)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("unable to create GitHub client: %w", err)

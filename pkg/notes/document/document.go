@@ -41,11 +41,12 @@ import (
 
 // Document represents the underlying structure of a release notes document.
 type Document struct {
-	NotesWithActionRequired notes.Notes    `json:"action_required"`
-	Notes                   NoteCollection `json:"notes"`
-	FileDownloads           *FileMetadata  `json:"downloads"`
-	ImageDownloads          *ImageMetadata `json:"images"`
-	CurrentRevision         string         `json:"release_tag"`
+	NotesWithActionRequired notes.Notes        `json:"action_required"`
+	Notes                   NoteCollection     `json:"notes"`
+	NotesV2                 NoteAreaCollection `json:"notesv2"`
+	FileDownloads           *FileMetadata      `json:"downloads"`
+	ImageDownloads          *ImageMetadata     `json:"images"`
+	CurrentRevision         string             `json:"release_tag"`
 	PreviousRevision        string
 	CVEList                 []cve.CVE
 }
