@@ -81,4 +81,14 @@ This release contains changes that address the following vulnerabilities:
 {{- end -}}
 
 {{- end -}}
+
+{{- if .NotesSpecial -}}
+{{ range $area, $AreaCategory := .NotesSpecial }}
+
+## {{ $area }}
+{{ range $AreaCategory }}
+{{ range $note := .NoteEntries }}{{println "-" $note}}{{end}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
 `

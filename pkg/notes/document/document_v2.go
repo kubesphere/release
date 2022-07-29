@@ -87,6 +87,22 @@ var AreaPriority = []notes.Area{
 	notes.AreaUncategorized,
 }
 
+func highestPriorityArea(areas []string) notes.Area {
+	if len(areas) == 1 {
+		return notes.Area(areas[0])
+	}
+	for _, prioArea := range AreaPriority {
+		for _, a := range areas {
+			area := notes.Area(a)
+			if area == prioArea {
+				return area
+			}
+		}
+	}
+	// no area?
+	return notes.Area(areas[0])
+}
+
 type NoteArea struct {
 	Area  notes.Area
 	Notes NoteCollection
@@ -100,7 +116,12 @@ func mapArea(area notes.Area) notes.Area {
 	return area
 }
 
+type AreaCategory struct {
+	Area        notes.Area
+	NoteEntries *notes.Notes
+}
 type NoteAreaCollection map[notes.Area][]NoteCategory
+type NoteAreaSpecial map[notes.Area]AreaCategory
 
 func NewV2(
 	releaseNotes *notes.ReleaseNotes,
@@ -110,6 +131,7 @@ func NewV2(
 		NotesWithActionRequired: notes.Notes{},
 		Notes:                   NoteCollection{},
 		NotesV2:                 make(map[notes.Area][]NoteCategory),
+		NotesSpecial:            make(map[notes.Area]AreaCategory),
 		CurrentRevision:         currentRev,
 		PreviousRevision:        previousRev,
 	}
@@ -166,19 +188,33 @@ func NewV2(
 
 			var area notes.Area
 			if len(note.Areas) == 0 {
-				area = "Unknown Area"
+				area = notes.AreaUncategorized
 			} else {
-				area = notes.Area(note.Areas[0])
+				area = mapArea(highestPriorityArea(note.Areas))
 			}
 
 			var kind notes.Kind
 			if len(note.Kinds) == 0 {
 				kind = notes.KindUncategorized
 			} else {
-				kind = notes.Kind(note.Kinds[0])
+				kind = notes.Kind(mapKind(highestPriorityKind(note.Kinds)))
 			}
 
-			// TODO use the priority first area
+			// for api changes
+			if kind == notes.KindAPIChange || area == notes.AreaAPIChangeAlias {
+				area = notes.AreaAPIChangeAlias
+				category, ok := doc.NotesSpecial[area]
+				if !ok {
+					doc.NotesSpecial[area] = AreaCategory{
+						Area:        area,
+						NoteEntries: &notes.Notes{processNote(note.Markdown)},
+					}
+				} else {
+					*category.NoteEntries = append(*category.NoteEntries, processNote(note.Markdown))
+				}
+				continue
+			}
+
 			kindCategory, ok := areaCategory[notes.Area(area)]
 			if ok {
 				category, ok := kindCategory[notes.Kind(kind)]

@@ -44,6 +44,7 @@ type Document struct {
 	NotesWithActionRequired notes.Notes        `json:"action_required"`
 	Notes                   NoteCollection     `json:"notes"`
 	NotesV2                 NoteAreaCollection `json:"notesv2"`
+	NotesSpecial            NoteAreaSpecial    `json:"notes_api_changes"`
 	FileDownloads           *FileMetadata      `json:"downloads"`
 	ImageDownloads          *ImageMetadata     `json:"images"`
 	CurrentRevision         string             `json:"release_tag"`
