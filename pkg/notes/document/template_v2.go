@@ -67,12 +67,18 @@ This release contains changes that address the following vulnerabilities:
 {{range .}}{{println "-" .}} {{end}}
 {{end}}
 
-{{- if .Notes -}}
-## Changes by Kind
-{{ range .Notes}}
+{{- if .NotesV2 -}}
+
+{{ range $area, $NoteCategory  :=  .NotesV2}}
+## {{ $area }}
+
+{{ range $NoteCategory}}
 ### {{.Kind | prettyKind}}
 
 {{range $note := .NoteEntries }}{{println "-" $note}}{{end}}
 {{- end -}}
+
+{{- end -}}
+
 {{- end -}}
 `

@@ -10,9 +10,94 @@ import (
 	"k8s.io/release/pkg/notes"
 )
 
+var AreaMap = map[notes.Area]notes.Area{
+	// observability
+	notes.AreaAlerting:      notes.AreaObservabilityAlias,
+	notes.AreaAuditing:      notes.AreaObservabilityAlias,
+	notes.AreaBilling:       notes.AreaObservabilityAlias,
+	notes.AreaLogging:       notes.AreaObservabilityAlias,
+	notes.AreaMetering:      notes.AreaObservabilityAlias,
+	notes.AreaMonitoring:    notes.AreaObservabilityAlias,
+	notes.AreaNotification:  notes.AreaObservabilityAlias,
+	notes.AreaObservability: notes.AreaObservabilityAlias,
+
+	// api change
+	notes.AreaAPIChange: notes.AreaAPIChangeAlias,
+
+	// app store
+	notes.AreaAppManagement: notes.AreaAppAlias,
+	notes.AreaApps:          notes.AreaAppAlias,
+
+	// devops
+	notes.AreaDevOps: notes.AreaDevOpsAlias,
+
+	// development & testing
+	notes.AreaE2ETestFramework: notes.AreaDevTestAlias,
+	notes.AreaInfra:            notes.AreaDevTestAlias,
+	notes.AreaTesting:          notes.AreaDevTestAlias,
+
+	// edge
+	notes.AreaEdge: notes.AreaEdgeAlias,
+
+	// Multi-tenancy & Multi-cluster
+
+	notes.AreaIAM:          notes.AreaIAMMulticlusterAlias,
+	notes.AreaMulticluster: notes.AreaIAMMulticlusterAlias,
+
+	// Service Mesh
+	notes.AreaMicroService: notes.AreaMicroServiceAlias,
+
+	// NetWork
+	notes.AreaNetWork: notes.AreaNetWorkAlias,
+
+	// storage
+	notes.AreaStorage: notes.AreaStorageAlias,
+
+	// User Experience
+	notes.AreaUI: notes.AreaUIAlias,
+
+	// Security
+	notes.AreaSecurity: notes.AreaSecurityAlias,
+}
+
+var AreaPriority = []notes.Area{
+	notes.AreaAlerting,
+	notes.AreaAuditing,
+	notes.AreaBilling,
+	notes.AreaLogging,
+	notes.AreaMetering,
+	notes.AreaMonitoring,
+	notes.AreaNotification,
+	notes.AreaObservability,
+	notes.AreaAPIChange,
+	notes.AreaAppManagement,
+	notes.AreaApps,
+	notes.AreaDevOps,
+	notes.AreaE2ETestFramework,
+	notes.AreaInfra,
+	notes.AreaTesting,
+	notes.AreaEdge,
+	notes.AreaIAM,
+	notes.AreaMulticluster,
+	notes.AreaMicroService,
+	notes.AreaNetWork,
+	notes.AreaStorage,
+	notes.AreaUI,
+	notes.AreaSecurity,
+	notes.AreaUncategorized,
+}
+
 type NoteArea struct {
 	Area  notes.Area
 	Notes NoteCollection
+}
+
+func mapArea(area notes.Area) notes.Area {
+	newArea, ok := AreaMap[area]
+	if ok {
+		return newArea
+	}
+	return area
 }
 
 type NoteAreaCollection map[notes.Area][]NoteCategory
