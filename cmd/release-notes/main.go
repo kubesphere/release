@@ -20,14 +20,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"k8s.io/release/pkg/notes"
+	"k8s.io/release/pkg/notes/configs"
 	"k8s.io/release/pkg/notes/document"
 	"k8s.io/release/pkg/notes/options"
 	"k8s.io/release/pkg/release"
@@ -46,6 +50,9 @@ type releaseNotesOptions struct {
 var (
 	releaseNotesOpts = &releaseNotesOptions{}
 	opts             = options.New()
+	conf             string
+	config           *configs.Config
+	once             sync.Once
 	cmd              = &cobra.Command{
 		Short:         "release-notes - The Kubernetes Release Notes Generator",
 		Use:           "release-notes",
@@ -266,6 +273,120 @@ func init() {
 		false,
 		"enable experimental implementation to list commits (ListReleaseNotesV2)",
 	)
+
+	cmd.PersistentFlags().StringVar(
+		&conf,
+		"conf",
+		"",
+		"config path",
+	)
+}
+
+func WriteReleaseNotesV2(releaseNotes *notes.ReleaseNotes, c *configs.Config) (err error) {
+	logrus.Infof(
+		"Got %d release notes v2, performing rendering",
+		len(releaseNotes.History()),
+	)
+	var (
+		// Open a handle to the file which will contain the release notes output
+		output        *os.File
+		existingNotes notes.ReleaseNotesByPR
+	)
+
+	if releaseNotesOpts.outputFile != "" {
+		output, err = os.OpenFile(releaseNotesOpts.outputFile, os.O_RDWR|os.O_CREATE, os.FileMode(0o644))
+		if err != nil {
+			return errors.Wrapf(err, "opening the supplied output file")
+		}
+	} else {
+		output, err = os.CreateTemp("", "release-notes-")
+		if err != nil {
+			return errors.Wrapf(err, "creating a temporary file to write the release notes to")
+		}
+	}
+
+	// Contextualized release notes can be printed in a variety of formats
+	if c.Format == options.FormatJSON {
+		byteValue, err := io.ReadAll(output)
+		if err != nil {
+			return err
+		}
+
+		if len(byteValue) > 0 {
+			if err := json.Unmarshal(byteValue, &existingNotes); err != nil {
+				return errors.Wrapf(err, "unmarshalling existing notes")
+			}
+		}
+
+		if len(existingNotes) > 0 {
+			if err := output.Truncate(0); err != nil {
+				return err
+			}
+			if _, err := output.Seek(0, 0); err != nil {
+				return err
+			}
+
+			for i := 0; i < len(existingNotes); i++ {
+				pr := existingNotes[i].PrNumber
+				if releaseNotes.Get(pr) == nil {
+					releaseNotes.Set(pr, existingNotes[i])
+				}
+			}
+		}
+
+		enc := json.NewEncoder(output)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(releaseNotes.ByPR()); err != nil {
+			return errors.Wrapf(err, "encoding JSON output")
+		}
+	} else {
+		doc, err := document.NewV2(releaseNotes, opts.StartRev, opts.EndRev)
+		if err != nil {
+			return errors.Wrapf(err, "creating release note document")
+		}
+
+		markdown, err := doc.RenderMarkdownTemplate(c.ReleaseBucket, c.ReleaseTars, "", c.GoTemplate)
+		if err != nil {
+			return errors.Wrapf(err, "rendering release note document with template")
+		}
+
+		const nl = "\n"
+		// range all repos now
+		// if releaseNotesOpts.dependencies {
+		if false {
+			if opts.StartSHA == opts.EndSHA {
+				logrus.Info("Skipping dependency report because start and end SHA are the same")
+			} else {
+				url := git.GetRepoURL(opts.GithubOrg, opts.GithubRepo, false)
+				deps, err := notes.NewDependencies().ChangesForURL(
+					url, opts.StartSHA, opts.EndSHA,
+				)
+				if err != nil {
+					return errors.Wrap(err, "generating dependency report")
+				}
+				markdown += strings.Repeat(nl, 2) + deps
+			}
+		}
+
+		if c.Toc {
+			toc, err := mdtoc.GenerateTOC([]byte(markdown), mdtoc.Options{
+				Dryrun:     false,
+				SkipPrefix: false,
+				MaxDepth:   mdtoc.MaxHeaderDepth,
+			})
+			if err != nil {
+				return errors.Wrap(err, "generating table of contents")
+			}
+			markdown = toc + nl + markdown
+		}
+
+		if _, err := output.WriteString(markdown); err != nil {
+			return errors.Wrap(err, "writing output file")
+		}
+	}
+
+	logrus.Infof("Release notes written to file: %s", output.Name())
+	return nil
 }
 
 func WriteReleaseNotes(releaseNotes *notes.ReleaseNotes) (err error) {
@@ -375,48 +496,31 @@ func WriteReleaseNotes(releaseNotes *notes.ReleaseNotes) (err error) {
 	return nil
 }
 
-func run(*cobra.Command, []string) error {
-	// for test now
-	var optss []options.Options
-	init := func() {
-		opt1 := options.Options{
-			GithubOrg:        "isyes",
-			GithubRepo:       "kubesphere",
-			RepoPath:         "",
-			Branch:           "master",
-			StartSHA:         "5c1f73134abf28a76bfef3a40e9059e6023a494a",
-			EndSHA:           "4522c841af59db55c8f826cafbf01f721a8704ad",
-			StartRev:         "",
-			EndRev:           "",
-			Format:           "markdown",
-			RequiredAuthor:   "",
-			Debug:            true,
-			GithubToken:      "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",
-			AddMarkdownLinks: true,
+func GetConfig() *configs.Config {
+	once.Do(func() {
+		yamlFile, err := ioutil.ReadFile(conf)
+		if err != nil {
+			panic(err)
 		}
-		opt2 := options.Options{
-			GithubOrg:        "isyes",
-			GithubRepo:       "console",
-			RepoPath:         "",
-			Branch:           "master",
-			StartSHA:         "def9a708115ea215125440d3c615b94e69179c5c",
-			EndSHA:           "1c4111858f2da98e578ae1c4ad69413b4ca86d9b",
-			StartRev:         "",
-			EndRev:           "",
-			Format:           "markdown",
-			RequiredAuthor:   "",
-			Debug:            true,
-			GithubToken:      "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",
-			AddMarkdownLinks: true,
+		err = yaml.Unmarshal(yamlFile, &config)
+		if err != nil {
+			panic(err)
 		}
-		optss = append(optss, opt1, opt2)
+	})
+	return config
+}
+
+func run_conf(*cobra.Command, []string) error {
+
+	config = GetConfig()
+	err := config.ValidateAndFinish()
+	if err != nil {
+		return err
 	}
-	init()
-	// fmt.Println(len(optss))
 	// return nil
 	var allRepoReleaseNotes []*notes.ReleaseNotes
-	for _, opts := range optss {
-		releaseNotes, err := notes.GatherReleaseNotes(&opts)
+	for _, opts := range config.Repos {
+		releaseNotes, err := notes.GatherReleaseNotes(opts)
 		if err != nil {
 			return fmt.Errorf("gathering release notes: %w", err)
 		}
@@ -434,7 +538,18 @@ func run(*cobra.Command, []string) error {
 		return mergeReleaseNotes
 	}
 	releaseNotes := mergeRepoReleaseNotes(allRepoReleaseNotes)
-	// return nil
+	return WriteReleaseNotesV2(releaseNotes, config)
+}
+
+func run(c *cobra.Command, params []string) error {
+	if conf != "" {
+		return run_conf(c, params)
+	}
+	releaseNotes, err := notes.GatherReleaseNotes(opts)
+	if err != nil {
+		return errors.Wrapf(err, "gathering release notes")
+	}
+
 	return WriteReleaseNotes(releaseNotes)
 }
 

@@ -7,8 +7,7 @@ repos:
     end-sha: 4522c841af59db55c8f826cafbf01f721a8704ad
     start-rev:
     end-rev:
-    required-author: ""
-    discover: none
+    discover-mode: none
     dependencies: true
   - org: kubesphere
     repo: console
@@ -18,8 +17,8 @@ repos:
     end-sha: 1c4111858f2da98e578ae1c4ad69413b4ca86d9b
     start-rev: 
     end-rev: 
-    required-author: ""
     discover: none
+    # only go repo support dependencies param
     dependencies: false
 github-base-url: https://github.com
 github-upload-url: ""
@@ -31,6 +30,9 @@ release-bucket: kubernetes-release
 release-tars: ""
 toc: true
 list-v2: false
+go-template: default
+github-token: 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
+required-author: ""
 
 
 

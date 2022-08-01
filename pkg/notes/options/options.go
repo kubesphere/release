@@ -39,35 +39,35 @@ type Options struct {
 
 	// GithubOrg specifies the GitHub organization from which will be
 	// cloned/pulled if Pull is true.
-	GithubOrg string
+	GithubOrg string `yaml:"org"`
 
 	// GithubRepo specifies the GitHub repository from which will be
 	// cloned/pulled if Pull is true.
-	GithubRepo string
+	GithubRepo string `yaml:"repo"`
 
 	// RepoPath specifies the git repository location for doing an update if
 	// Pull is true.
-	RepoPath string
+	RepoPath string `yaml:"repo-path"`
 
 	// Branch will be used for discovering the latest patch version if
 	// DiscoverMode is RevisionDiscoveryModePatchToPatch.
-	Branch string
+	Branch string `yaml:"branch"`
 
 	// StartSHA can be used to set the release notes start revision to an
 	// exact git SHA. Should not be used together with StartRev.
-	StartSHA string
+	StartSHA string `yaml:"start-sha"`
 
 	// EndSHA can be used to set the release notes end revision to an
 	// exact git SHA. Should not be used together with EndRev.
-	EndSHA string
+	EndSHA string `yaml:"end-sha"`
 
 	// StartRev can be used to set the release notes start revision to any
 	// valid git revision. Should not be used together with StartSHA.
-	StartRev string
+	StartRev string `yaml:"start-rev"`
 
 	// EndRev can be used to set the release notes end revision to any
 	// valid git revision. Should not be used together with EndSHA.
-	EndRev string
+	EndRev string `yaml:"end-rev"`
 
 	// Format specifies the format of the release notes. Can be either
 	// `json` or `markdown`.
@@ -87,7 +87,7 @@ type Options struct {
 	// RevisionDiscoveryModeMergeBaseToLatest,
 	// RevisionDiscoveryModePatchToPatch, or RevisionDiscoveryModeMinorToMinor.
 	// Should not be used together with StartRev, EndRev, StartSHA or EndSHA.
-	DiscoverMode string
+	DiscoverMode string `yaml:"discover-mode"`
 
 	// ReleaseTars specifies the directory where the release tarballs are
 	// located.
@@ -104,7 +104,7 @@ type Options struct {
 
 	// If true, then the release notes generator will print messages in debug
 	// log level
-	Debug bool
+	Debug bool `yaml:"debug"`
 
 	// EXPERIMENTAL: Feature flag for using v2 implementation to list commits
 	ListReleaseNotesV2 bool
@@ -169,6 +169,7 @@ func New() *Options {
 // values.
 func (o *Options) ValidateAndFinish() (err error) {
 	// Add appropriate log filtering
+	return nil
 	if o.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
