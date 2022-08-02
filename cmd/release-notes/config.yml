@@ -22,7 +22,7 @@ repos:
     dependencies: false
 github-base-url: https://github.com
 github-upload-url: ""
-output: /tmp/release-notes-v3.3.0.md
+# output: /tmp/release-notes-v3.3.0.md
 format: markdown
 markdown-links: true
 debug: true
@@ -30,7 +30,7 @@ release-bucket: kubernetes-release
 release-tars: ""
 toc: true
 list-v2: false
-go-template: default
+go-template: go-template:default
 github-token: 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
 required-author: ""
 

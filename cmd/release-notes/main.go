@@ -26,6 +26,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -287,14 +288,15 @@ func WriteReleaseNotesV2(releaseNotes *notes.ReleaseNotes, c *configs.Config) (e
 		"Got %d release notes v2, performing rendering",
 		len(releaseNotes.History()),
 	)
+	// return nil
 	var (
 		// Open a handle to the file which will contain the release notes output
 		output        *os.File
 		existingNotes notes.ReleaseNotesByPR
 	)
 
-	if releaseNotesOpts.outputFile != "" {
-		output, err = os.OpenFile(releaseNotesOpts.outputFile, os.O_RDWR|os.O_CREATE, os.FileMode(0o644))
+	if c.Output != "" {
+		output, err = os.OpenFile(c.Output, os.O_RDWR|os.O_CREATE, os.FileMode(0o644))
 		if err != nil {
 			return errors.Wrapf(err, "opening the supplied output file")
 		}
@@ -448,7 +450,7 @@ func WriteReleaseNotes(releaseNotes *notes.ReleaseNotes) (err error) {
 			return fmt.Errorf("encoding JSON output: %w", err)
 		}
 	} else {
-		doc, err := document.NewV2(releaseNotes, opts.StartRev, opts.EndRev)
+		doc, err := document.New(releaseNotes, opts.StartRev, opts.EndRev)
 		if err != nil {
 			return fmt.Errorf("creating release note document: %w", err)
 		}
@@ -511,13 +513,11 @@ func GetConfig() *configs.Config {
 }
 
 func run_conf(*cobra.Command, []string) error {
-
 	config = GetConfig()
 	err := config.ValidateAndFinish()
 	if err != nil {
 		return err
 	}
-	// return nil
 	var allRepoReleaseNotes []*notes.ReleaseNotes
 	for _, opts := range config.Repos {
 		releaseNotes, err := notes.GatherReleaseNotes(opts)
@@ -542,6 +542,7 @@ func run_conf(*cobra.Command, []string) error {
 }
 
 func run(c *cobra.Command, params []string) error {
+	// TODO
 	if conf != "" {
 		return run_conf(c, params)
 	}
