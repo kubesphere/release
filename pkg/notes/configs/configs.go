@@ -29,6 +29,8 @@ func (c *Config) ValidateAndFinish() error {
 		repo.AddMarkdownLinks = c.MarkdownLinks
 		repo.Format = c.Format
 		repo.GoTemplate = c.GoTemplate
+		// for kubesphere, always set true
+		repo.AddRepoName = true
 	}
 
 	return nil

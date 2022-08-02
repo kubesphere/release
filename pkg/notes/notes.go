@@ -483,11 +483,18 @@ func (g *Gatherer) ReleaseNoteFromCommit(result *Result) (*ReleaseNote, error) {
 
 	// TODO: Spin this to sep function
 	indented := strings.ReplaceAll(text, "\n", "\n  ")
-	markdown := fmt.Sprintf("%s (#%d, @%s)",
-		indented, pr.GetNumber(), author)
+	// for kubesphere
+	prNumber := strconv.Itoa(pr.GetNumber())
+	if g.options.AddRepoName {
+		prNumber = g.options.GithubRepo + "#" + prNumber
+	} else {
+		prNumber = "#" + prNumber
+	}
+	markdown := fmt.Sprintf("%s (%s, @%s)",
+		indented, prNumber, author)
 	if g.options.AddMarkdownLinks {
-		markdown = fmt.Sprintf("%s ([#%d](%s), [@%s](%s))",
-			indented, pr.GetNumber(), prURL, author, authorURL)
+		markdown = fmt.Sprintf("%s ([%s](%s), [@%s](%s))",
+			indented, prNumber, prURL, author, authorURL)
 	}
 
 	if noteSuffix != "" {
