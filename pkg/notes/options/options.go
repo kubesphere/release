@@ -100,7 +100,7 @@ type Options struct {
 
 	// If true, then the release notes generator will pull in latest changes
 	// from the default git remote
-	Pull bool
+	Pull bool `yaml:"pull"`
 
 	// If true, then the release notes generator will print messages in debug
 	// log level
@@ -118,7 +118,7 @@ type Options struct {
 	ReplayDir string
 
 	GithubToken string
-	gitCloneFn  func(string, string, string, bool) (*git.Repo, error)
+	GitCloneFn  func(string, string, string, bool) (*git.Repo, error)
 
 	// MapProviders list of release notes map providers to query during generations
 	MapProviderStrings []string
@@ -161,7 +161,7 @@ func New() *Options {
 		Format:             FormatMarkdown,
 		GoTemplate:         GoTemplateDefault,
 		Pull:               true,
-		gitCloneFn:         git.CloneOrOpenGitHubRepo,
+		GitCloneFn:         git.CloneOrOpenGitHubRepo,
 		MapProviderStrings: []string{},
 		AddMarkdownLinks:   false,
 	}
@@ -172,7 +172,7 @@ func New() *Options {
 // values.
 func (o *Options) ValidateAndFinish() (err error) {
 	// Add appropriate log filtering
-	return nil
+
 	if o.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
@@ -218,7 +218,9 @@ func (o *Options) ValidateAndFinish() (err error) {
 	// Check if we have to parse a revision
 	if (o.StartRev != "" && o.StartSHA == "") || (o.EndRev != "" && o.EndSHA == "") {
 		repo, err := o.repo()
+
 		if err != nil {
+			fmt.Println("error")
 			return err
 		}
 		if o.StartRev != "" && o.StartSHA == "" {
@@ -330,7 +332,7 @@ func (o *Options) resolveDiscoverMode() error {
 func (o *Options) repo() (repo *git.Repo, err error) {
 	if o.Pull {
 		logrus.Infof("Cloning/updating repository %s/%s", o.GithubOrg, o.GithubRepo)
-		repo, err = o.gitCloneFn(
+		repo, err = o.GitCloneFn(
 			o.RepoPath,
 			o.GithubOrg,
 			o.GithubRepo,

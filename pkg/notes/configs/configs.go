@@ -1,7 +1,11 @@
 package configs
 
 import (
+	"os"
+	"path/filepath"
+
 	"k8s.io/release/pkg/notes/options"
+	"sigs.k8s.io/release-sdk/git"
 )
 
 type Config struct {
@@ -29,8 +33,17 @@ func (c *Config) ValidateAndFinish() error {
 		repo.AddMarkdownLinks = c.MarkdownLinks
 		repo.Format = c.Format
 		repo.GoTemplate = c.GoTemplate
+		repo.GitCloneFn = git.CloneOrOpenGitHubRepo
+		if repo.RepoPath == "" {
+			repo.RepoPath = filepath.Join(os.TempDir(), repo.GithubRepo)
+		}
+		// repo.
 		// for kubesphere, always set true
 		repo.AddRepoName = true
+		err := repo.ValidateAndFinish()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

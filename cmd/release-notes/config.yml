@@ -2,22 +2,24 @@ repos:
   - org: kubesphere
     repo: kubesphere
     branch: master
-    repo-path:
-    start-sha: 5c1f73134abf28a76bfef3a40e9059e6023a494a
-    end-sha: 4522c841af59db55c8f826cafbf01f721a8704ad
-    start-rev:
-    end-rev:
+    pull: true
+    # repo-path: /tmp/
+    # start-sha: 5c1f73134abf28a76bfef3a40e9059e6023a494a
+    # end-sha: 4522c841af59db55c8f826cafbf01f721a8704ad
+    start-rev: v3.2.1
+    end-rev: v3.3.0
     discover-mode: none
     dependencies: true
   - org: kubesphere
     repo: console
     branch: master
-    repo-path:
-    start-sha: def9a708115ea215125440d3c615b94e69179c5c
-    end-sha: 1c4111858f2da98e578ae1c4ad69413b4ca86d9b
-    start-rev: 
-    end-rev: 
-    discover: none
+    pull: true
+    # repo-path: /tmp/
+    # start-sha: def9a708115ea215125440d3c615b94e69179c5c
+    # end-sha: 1c4111858f2da98e578ae1c4ad69413b4ca86d9b
+    start-rev: v3.2.1
+    end-rev: v3.3.0
+    discover-mode: none
     # only go repo support dependencies param
     dependencies: false
 github-base-url: https://github.com

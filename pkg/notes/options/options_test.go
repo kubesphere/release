@@ -66,7 +66,7 @@ func newTestOptions(t *testing.T) *testOptions {
 			Format:       FormatMarkdown,
 			GoTemplate:   GoTemplateDefault,
 			Pull:         true,
-			gitCloneFn: func(string, string, string, bool) (*kgit.Repo, error) {
+			GitCloneFn: func(string, string, string, bool) (*kgit.Repo, error) {
 				return testRepo.sut, nil
 			},
 		},
@@ -280,7 +280,7 @@ func TestValidateAndFinishFailureClone(t *testing.T) {
 	defer options.testRepo.cleanup(t)
 
 	options.StartRev = options.testRepo.firstTagName
-	options.gitCloneFn = func(string, string, string, bool) (*kgit.Repo, error) {
+	options.GitCloneFn = func(string, string, string, bool) (*kgit.Repo, error) {
 		return nil, errors.New("error")
 	}
 	options.StartSHA = ""
@@ -352,7 +352,7 @@ func TestValidateAndFinishFailureDiscoveryModeMergeBaseToLatestClone(t *testing.
 	defer options.testRepo.cleanup(t)
 
 	options.DiscoverMode = RevisionDiscoveryModeMergeBaseToLatest
-	options.gitCloneFn = func(string, string, string, bool) (*kgit.Repo, error) {
+	options.GitCloneFn = func(string, string, string, bool) (*kgit.Repo, error) {
 		return nil, errors.New("error")
 	}
 	require.NotNil(t, options.ValidateAndFinish())
