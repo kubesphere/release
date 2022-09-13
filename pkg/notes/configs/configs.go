@@ -40,7 +40,7 @@ func (c *Config) ValidateAndFinish() error {
 		// repo.
 		// for kubesphere, always set true
 		repo.AddRepoName = true
-		err := repo.ValidateAndFinish()
+		err := repo.ValidateAndFinishV2()
 		if err != nil {
 			return err
 		}
