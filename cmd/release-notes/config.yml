@@ -33,7 +33,7 @@ release-tars: ""
 toc: true
 list-v2: false
 go-template: go-template:default
-github-token: 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
+github-token: your-token
 required-author: ""
 
 
