@@ -27,15 +27,17 @@ func (o *Options) ValidateAndFinishV2() (err error) {
 	}
 
 	// The GitHub Token is required if replay is not specified
-	// token, ok := os.LookupEnv(github.TokenEnvKey)
-	// if ok {
-	// 	o.GithubToken = token
-	// } else if o.ReplayDir == "" {
-	// 	return errors.Errorf(
-	// 		"neither environment variable `%s` nor `replay` option is set",
-	// 		github.TokenEnvKey,
-	// 	)
-	// }
+	if o.GithubToken == "" {
+		token, ok := os.LookupEnv(github.TokenEnvKey)
+		if ok {
+			o.GithubToken = token
+		} else if o.ReplayDir == "" {
+			return errors.Errorf(
+				"neither environment variable `%s` nor `replay` option is set",
+				github.TokenEnvKey,
+			)
+		}
+	}
 
 	// Check if we want to automatically discover the revisions
 	if o.DiscoverMode != RevisionDiscoveryModeNONE {

@@ -108,7 +108,7 @@ func (g *Gatherer) ListReleaseNotesV2() (*ReleaseNotes, error) {
 						"note": releaseNote.Text,
 					}).Debugf("finalized release note")
 					aggregator.Lock()
-					aggregator.releaseNotes.Set(pair.PrNum, releaseNote)
+					aggregator.releaseNotes.Set(string(rune(pair.PrNum)), releaseNote)
 					aggregator.Unlock()
 				} else {
 					logrus.WithFields(logrus.Fields{
