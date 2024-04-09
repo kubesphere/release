@@ -173,10 +173,10 @@ func NewReleaseNotes() *ReleaseNotes {
 // To avoid needless loops, we need to be able to reference things by PR
 // When we have to merge old and new entries, we want to be able to override
 // the old entries with the new ones efficiently.
-type ReleaseNotesByPR map[int]*ReleaseNote
+type ReleaseNotesByPR map[string]*ReleaseNote
 
 // ReleaseNotesHistory is the sorted list of PRs in the commit history
-type ReleaseNotesHistory []int
+type ReleaseNotesHistory []string
 
 // History returns the ReleaseNotesHistory for the ReleaseNotes
 func (r *ReleaseNotes) History() ReleaseNotesHistory {
@@ -188,15 +188,15 @@ func (r *ReleaseNotes) ByPR() ReleaseNotesByPR {
 	return r.byPR
 }
 
-// Get returns the ReleaseNote for the provided prNumber
-func (r *ReleaseNotes) Get(prNumber int) *ReleaseNote {
-	return r.byPR[prNumber]
+// Get returns the ReleaseNote for the provided prURL
+func (r *ReleaseNotes) Get(prURL string) *ReleaseNote {
+	return r.byPR[prURL]
 }
 
-// Set can be used to set a release note for the provided prNumber
-func (r *ReleaseNotes) Set(prNumber int, note *ReleaseNote) {
-	r.byPR[prNumber] = note
-	r.history = append(r.history, prNumber)
+// Set can be used to set a release note for the provided prURL
+func (r *ReleaseNotes) Set(prURL string, note *ReleaseNote) {
+	r.byPR[prURL] = note
+	r.history = append(r.history, prURL)
 }
 
 type Result struct {
@@ -288,34 +288,34 @@ func (g *Gatherer) ListReleaseNotes() (*ReleaseNotes, error) {
 	logrus.Info("Checking PRs for mapped data")
 	for _, res := range resultsTemp {
 		// If the PR has no release note, check if we have to add it
-		if MatchesExcludeFilter(*res.pullRequest.Body) {
-			for _, provider := range mapProviders {
-				noteMaps, err := provider.GetMapsForPR(res.pullRequest.GetNumber())
-				if err != nil {
-					return nil, fmt.Errorf(
-						"checking if a map exists for PR %d: %w", res.pullRequest.GetNumber(),
-						err)
-				}
-				if len(noteMaps) != 0 {
-					logrus.Infof(
-						"Artificially adding pr #%d because a map for it was found",
-						res.pullRequest.GetNumber(),
-					)
-					results = append(results, res)
-				} else {
-					logrus.Debugf(
-						"Skipping PR #%d because it contains no release note",
-						res.pullRequest.GetNumber(),
-					)
-				}
-			}
-		} else {
-			// Append the note as it is
-			results = append(results, res)
-		}
+		// if MatchesExcludeFilter(*res.pullRequest.Body) {
+		// 	for _, provider := range mapProviders {
+		// 		noteMaps, err := provider.GetMapsForPR(res.pullRequest.GetNumber())
+		// 		if err != nil {
+		// 			return nil, fmt.Errorf(
+		// 				"checking if a map exists for PR %d: %w", res.pullRequest.GetNumber(),
+		// 				err)
+		// 		}
+		// 		if len(noteMaps) != 0 {
+		// 			logrus.Infof(
+		// 				"Artificially adding pr #%d because a map for it was found",
+		// 				res.pullRequest.GetNumber(),
+		// 			)
+		// 			results = append(results, res)
+		// 		} else {
+		// 			logrus.Debugf(
+		// 				"Skipping PR #%d because it contains no release note",
+		// 				res.pullRequest.GetNumber(),
+		// 			)
+		// 		}
+		// 	}
+		// } else {
+		// Append the note as it is
+		results = append(results, res)
+		// }
 	}
 
-	dedupeCache := map[string]struct{}{}
+	// dedupeCache := map[string]struct{}{}
 	notes := NewReleaseNotes()
 	for _, result := range results {
 		if g.options.RequiredAuthor != "" {
@@ -351,10 +351,10 @@ func (g *Gatherer) ListReleaseNotes() (*ReleaseNotes, error) {
 				}
 			}
 		}
-		if _, ok := dedupeCache[note.Text]; !ok {
-			notes.Set(note.PrNumber, note)
-			dedupeCache[note.Text] = struct{}{}
-		}
+		// if _, ok := dedupeCache[note.Text]; !ok {
+		notes.Set(note.PrURL, note)
+		// 	dedupeCache[note.Text] = struct{}{}
+		// }
 	}
 	return notes, nil
 }
@@ -460,7 +460,7 @@ func (g *Gatherer) ReleaseNoteFromCommit(result *Result) (*ReleaseNote, error) {
 	prBody := pr.GetBody()
 	text, err := noteTextFromString(prBody)
 	if err != nil {
-		return nil, err
+		text = *pr.Title
 	}
 
 	documentation := DocumentationFromString(prBody)

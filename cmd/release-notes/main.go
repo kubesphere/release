@@ -328,10 +328,9 @@ func WriteReleaseNotesV2(releaseNotes *notes.ReleaseNotes, c *configs.Config) (e
 				return err
 			}
 
-			for i := 0; i < len(existingNotes); i++ {
-				pr := existingNotes[i].PrNumber
-				if releaseNotes.Get(pr) == nil {
-					releaseNotes.Set(pr, existingNotes[i])
+			for prURL, pr := range existingNotes {
+				if releaseNotes.Get(prURL) == nil {
+					releaseNotes.Set(prURL, pr)
 				}
 			}
 		}
@@ -436,10 +435,9 @@ func WriteReleaseNotes(releaseNotes *notes.ReleaseNotes) (err error) {
 				return err
 			}
 
-			for i := 0; i < len(existingNotes); i++ {
-				pr := existingNotes[i].PrNumber
-				if releaseNotes.Get(pr) == nil {
-					releaseNotes.Set(pr, existingNotes[i])
+			for prURL, pr := range existingNotes {
+				if releaseNotes.Get(prURL) == nil {
+					releaseNotes.Set(prURL, pr)
 				}
 			}
 		}
@@ -518,29 +516,20 @@ func run_conf(*cobra.Command, []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(config)
+	logrus.Infof("Config is %+v", config)
 	// return nil
-	var allRepoReleaseNotes []*notes.ReleaseNotes
+	var mergeReleaseNotes = notes.NewReleaseNotes()
 	for _, opts := range config.Repos {
 		releaseNotes, err := notes.GatherReleaseNotes(opts)
 		if err != nil {
 			return fmt.Errorf("gathering release notes: %w", err)
 		}
-		allRepoReleaseNotes = append(allRepoReleaseNotes, releaseNotes)
-	}
-	// merge all repo's release notes
-	mergeRepoReleaseNotes := func(rns []*notes.ReleaseNotes) *notes.ReleaseNotes {
-		mergeReleaseNotes := notes.NewReleaseNotes()
-		for _, rn := range rns {
-			prs := rn.ByPR()
-			for prNum, releaseNote := range prs {
-				mergeReleaseNotes.Set(prNum, releaseNote)
-			}
+
+		for _, releaseNote := range releaseNotes.ByPR() {
+			mergeReleaseNotes.Set(releaseNote.PrURL, releaseNote)
 		}
-		return mergeReleaseNotes
 	}
-	releaseNotes := mergeRepoReleaseNotes(allRepoReleaseNotes)
-	return WriteReleaseNotesV2(releaseNotes, config)
+	return WriteReleaseNotesV2(mergeReleaseNotes, config)
 }
 
 func run(c *cobra.Command, params []string) error {
