@@ -41,11 +41,13 @@ import (
 
 // Document represents the underlying structure of a release notes document.
 type Document struct {
-	NotesWithActionRequired notes.Notes    `json:"action_required"`
-	Notes                   NoteCollection `json:"notes"`
-	FileDownloads           *FileMetadata  `json:"downloads"`
-	ImageDownloads          *ImageMetadata `json:"images"`
-	CurrentRevision         string         `json:"release_tag"`
+	NotesWithActionRequired notes.Notes        `json:"action_required"`
+	Notes                   NoteCollection     `json:"notes"`
+	NotesV2                 NoteAreaCollection `json:"notesv2"`
+	NotesSpecial            NoteAreaSpecial    `json:"notes_api_changes"`
+	FileDownloads           *FileMetadata      `json:"downloads"`
+	ImageDownloads          *ImageMetadata     `json:"images"`
+	CurrentRevision         string             `json:"release_tag"`
 	PreviousRevision        string
 	CVEList                 []cve.CVE
 }
@@ -395,7 +397,7 @@ func (d *Document) RenderMarkdownTemplate(bucket, tars, images, templateSpec str
 // `go-template:inline:string`
 func (d *Document) template(templateSpec string) (string, error) {
 	if templateSpec == options.GoTemplateDefault {
-		return defaultReleaseNotesTemplate, nil
+		return defaultReleaseNotesTemplateV2, nil
 	}
 
 	if !strings.HasPrefix(templateSpec, options.GoTemplatePrefix) {

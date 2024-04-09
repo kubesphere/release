@@ -39,35 +39,35 @@ type Options struct {
 
 	// GithubOrg specifies the GitHub organization from which will be
 	// cloned/pulled if Pull is true.
-	GithubOrg string
+	GithubOrg string `yaml:"org"`
 
 	// GithubRepo specifies the GitHub repository from which will be
 	// cloned/pulled if Pull is true.
-	GithubRepo string
+	GithubRepo string `yaml:"repo"`
 
 	// RepoPath specifies the git repository location for doing an update if
 	// Pull is true.
-	RepoPath string
+	RepoPath string `yaml:"repo-path"`
 
 	// Branch will be used for discovering the latest patch version if
 	// DiscoverMode is RevisionDiscoveryModePatchToPatch.
-	Branch string
+	Branch string `yaml:"branch"`
 
 	// StartSHA can be used to set the release notes start revision to an
 	// exact git SHA. Should not be used together with StartRev.
-	StartSHA string
+	StartSHA string `yaml:"start-sha"`
 
 	// EndSHA can be used to set the release notes end revision to an
 	// exact git SHA. Should not be used together with EndRev.
-	EndSHA string
+	EndSHA string `yaml:"end-sha"`
 
 	// StartRev can be used to set the release notes start revision to any
 	// valid git revision. Should not be used together with StartSHA.
-	StartRev string
+	StartRev string `yaml:"start-rev"`
 
 	// EndRev can be used to set the release notes end revision to any
 	// valid git revision. Should not be used together with EndSHA.
-	EndRev string
+	EndRev string `yaml:"end-rev"`
 
 	// Format specifies the format of the release notes. Can be either
 	// `json` or `markdown`.
@@ -87,7 +87,7 @@ type Options struct {
 	// RevisionDiscoveryModeMergeBaseToLatest,
 	// RevisionDiscoveryModePatchToPatch, or RevisionDiscoveryModeMinorToMinor.
 	// Should not be used together with StartRev, EndRev, StartSHA or EndSHA.
-	DiscoverMode string
+	DiscoverMode string `yaml:"discover-mode"`
 
 	// ReleaseTars specifies the directory where the release tarballs are
 	// located.
@@ -100,11 +100,11 @@ type Options struct {
 
 	// If true, then the release notes generator will pull in latest changes
 	// from the default git remote
-	Pull bool
+	Pull bool `yaml:"pull"`
 
 	// If true, then the release notes generator will print messages in debug
 	// log level
-	Debug bool
+	Debug bool `yaml:"debug"`
 
 	// EXPERIMENTAL: Feature flag for using v2 implementation to list commits
 	ListReleaseNotesV2 bool
@@ -117,8 +117,8 @@ type Options struct {
 	// API. Cannot be used together with RecordDir.
 	ReplayDir string
 
-	githubToken string
-	gitCloneFn  func(string, string, string, bool) (*git.Repo, error)
+	GithubToken string
+	GitCloneFn  func(string, string, string, bool) (*git.Repo, error)
 
 	// MapProviders list of release notes map providers to query during generations
 	MapProviderStrings []string
@@ -127,6 +127,9 @@ type Options struct {
 	// This is useful when the release notes are outputted to a file. When using the GitHub release page to publish release notes,
 	// this option should be set to false to take advantage of Github's autolinked references.
 	AddMarkdownLinks bool
+
+	// for kubesphere
+	AddRepoName bool
 }
 
 type RevisionDiscoveryMode string
@@ -158,7 +161,7 @@ func New() *Options {
 		Format:             FormatMarkdown,
 		GoTemplate:         GoTemplateDefault,
 		Pull:               true,
-		gitCloneFn:         git.CloneOrOpenGitHubRepo,
+		GitCloneFn:         git.CloneOrOpenGitHubRepo,
 		MapProviderStrings: []string{},
 		AddMarkdownLinks:   false,
 	}
@@ -169,6 +172,7 @@ func New() *Options {
 // values.
 func (o *Options) ValidateAndFinish() (err error) {
 	// Add appropriate log filtering
+
 	if o.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
@@ -186,7 +190,7 @@ func (o *Options) ValidateAndFinish() (err error) {
 	// The GitHub Token is required if replay is not specified
 	token, ok := os.LookupEnv(github.TokenEnvKey)
 	if ok {
-		o.githubToken = token
+		o.GithubToken = token
 	} else if o.ReplayDir == "" {
 		return fmt.Errorf(
 			"neither environment variable `%s` nor `replay` option is set",
@@ -214,7 +218,9 @@ func (o *Options) ValidateAndFinish() (err error) {
 	// Check if we have to parse a revision
 	if (o.StartRev != "" && o.StartSHA == "") || (o.EndRev != "" && o.EndSHA == "") {
 		repo, err := o.repo()
+
 		if err != nil {
+			fmt.Println("error")
 			return err
 		}
 		if o.StartRev != "" && o.StartSHA == "" {
@@ -326,7 +332,7 @@ func (o *Options) resolveDiscoverMode() error {
 func (o *Options) repo() (repo *git.Repo, err error) {
 	if o.Pull {
 		logrus.Infof("Cloning/updating repository %s/%s", o.GithubOrg, o.GithubRepo)
-		repo, err = o.gitCloneFn(
+		repo, err = o.GitCloneFn(
 			o.RepoPath,
 			o.GithubOrg,
 			o.GithubRepo,
@@ -356,9 +362,9 @@ func (o *Options) Client() (github.Client, error) {
 	var err error
 	// Create a real GitHub API client
 	if o.GithubBaseURL != "" && o.GithubUploadURL != "" {
-		gh, err = github.NewEnterpriseWithToken(o.GithubBaseURL, o.GithubUploadURL, o.githubToken)
+		gh, err = github.NewEnterpriseWithToken(o.GithubBaseURL, o.GithubUploadURL, o.GithubToken)
 	} else {
-		gh, err = github.NewWithToken(o.githubToken)
+		gh, err = github.NewWithToken(o.GithubToken)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("unable to create GitHub client: %w", err)
